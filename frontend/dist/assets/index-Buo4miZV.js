@@ -18682,14 +18682,14 @@ var DEFAULT_LAT = 44.0247;
 var DEFAULT_LNG = -88.5426;
 function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 	const getCustomerCoords = (customerId) => {
-		const customer = customers.find((c) => c.id === customerId);
+		const customer = customers.find((c) => String(c.id) === String(customerId));
 		return {
 			lat: customer?.lat ?? DEFAULT_LAT,
 			lng: customer?.lng ?? DEFAULT_LNG
 		};
 	};
 	const [formData, setFormData] = (0, import_react.useState)({
-		customerId: 0,
+		customerId: "",
 		type: "install",
 		status: "pending",
 		description: "",
@@ -18730,8 +18730,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 	if (!isOpen) return null;
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		const customerId = parseInt(String(formData.customerId));
-		if (isNaN(customerId) || customerId <= 0) {
+		if (!formData.customerId || formData.customerId === "" || formData.customerId === 0) {
 			alert("Please select a valid customer");
 			return;
 		}
@@ -18741,7 +18740,6 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 		}
 		onSubmit({
 			...formData,
-			customerId,
 			cost: formData.cost ? parseFloat(String(formData.cost)) : void 0
 		});
 		onClose();
@@ -18778,7 +18776,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 							className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
 							required: true,
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-								value: 0,
+								value: "",
 								children: "-- Select a customer --"
 							}), customers.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
 								value: c.id,
@@ -19158,6 +19156,19 @@ var toNumber = (v) => {
 		if (Number.isFinite(n)) return n;
 	}
 };
+var normalizeCustomer = (raw) => {
+	return {
+		id: raw?.id ?? Date.now(),
+		name: raw?.name ?? "Unknown",
+		email: raw?.email ?? void 0,
+		phone: raw?.phone ?? void 0,
+		address: raw?.address ?? "",
+		lat: toNumber(raw?.lat ?? raw?.latitude),
+		lng: toNumber(raw?.lng ?? raw?.longitude ?? raw?.lon),
+		notes: raw?.notes ?? void 0,
+		createdAt: raw?.createdAt ?? raw?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
+	};
+};
 var normalizeJob = (raw) => {
 	const lat = toNumber(raw?.lat ?? raw?.latitude);
 	const lng = toNumber(raw?.lng ?? raw?.longitude ?? raw?.lon);
@@ -19193,13 +19204,15 @@ async function apiFetch(path, options) {
 	return res.json();
 }
 async function fetchCustomers() {
-	return apiFetch("/customers");
+	const rows = await apiFetch("/customers");
+	if (!Array.isArray(rows)) return [];
+	return rows.map(normalizeCustomer);
 }
 async function createCustomer(data) {
-	return apiFetch("/customers", {
+	return normalizeCustomer(await apiFetch("/customers", {
 		method: "POST",
 		body: JSON.stringify(data)
-	});
+	}));
 }
 async function fetchJobs() {
 	const rows = await apiFetch("/jobs");
@@ -19322,8 +19335,8 @@ function App() {
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
 			console.log("[App] Adding job:", jobData);
-			const customerId = parseInt(jobData.customerId);
-			if (isNaN(customerId) || customerId <= 0) throw new Error("Please select a valid customer");
+			const customerId = jobData.customerId;
+			if (!customerId || customerId === "" || customerId === 0) throw new Error("Please select a valid customer");
 			const lat = typeof jobData.lat === "number" ? jobData.lat : parseFloat(jobData.lat);
 			const lng = typeof jobData.lng === "number" ? jobData.lng : parseFloat(jobData.lng);
 			if (isNaN(lat) || isNaN(lng)) throw new Error("Invalid coordinates: lat and lng must be valid numbers");
@@ -20091,4 +20104,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-BjtuiGtJ.js.map
+//# sourceMappingURL=index-Buo4miZV.js.map
