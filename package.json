@@ -7,20 +7,19 @@
     "start": "node backend/dist/index.js",
     "dev": "cd backend && npx tsx watch src/index.ts",
     "seed": "cd backend && npx tsx src/seed.ts",
-    "build": "cd backend && npx tsc",
-    "postinstall": "cd backend && npm install"
+    "build": "cd backend && npx tsc"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "typescript": "^5.4.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.0",
-    "tsx": "^4.11.0",
-    "typescript": "^5.4.5"
+    "tsx": "^4.11.0"
   },
   "engines": {
     "node": ">=18.0.0"
