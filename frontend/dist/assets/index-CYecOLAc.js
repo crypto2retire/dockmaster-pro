@@ -18571,22 +18571,17 @@ function Dashboard({ jobs }) {
 //#region src/utils/geocode.ts
 async function geocodeAddress(address) {
 	try {
-		const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, { headers: { "User-Agent": "DockMasterPro/2.0 (dockmaster@example.com)" } });
+		const response = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`);
 		if (!response.ok) {
-			console.warn("Nominatim failed:", response.status);
+			console.warn("Geocoding failed:", response.status);
 			return null;
 		}
 		const data = await response.json();
-		if (!data || data.length === 0) {
-			console.warn("Nominatim returned no results for:", address);
-			return null;
-		}
-		const result = data[0];
 		return {
-			lat: parseFloat(result.lat),
-			lng: parseFloat(result.lon),
-			displayName: result.display_name,
-			address: result.address || {}
+			lat: data.lat,
+			lng: data.lng,
+			displayName: data.displayName,
+			address: {}
 		};
 	} catch (error) {
 		console.error("Geocoding error:", error);
@@ -20190,4 +20185,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-eXf5Zxed.js.map
+//# sourceMappingURL=index-CYecOLAc.js.map
