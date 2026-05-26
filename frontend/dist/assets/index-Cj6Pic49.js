@@ -17888,12 +17888,15 @@ var DefaultIcon = import_leaflet_src.default.icon({
 	iconAnchor: [12, 41]
 });
 import_leaflet_src.default.Marker.prototype.options.icon = DefaultIcon;
+function hasFiniteCoords(lat, lng) {
+	return typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng);
+}
 function MapController({ selectedJobId, jobs, searchLocation }) {
 	const map = useMap();
 	(0, import_react.useEffect)(() => {
 		if (selectedJobId) {
 			const job = jobs.find((j) => j.id === selectedJobId);
-			if (job && typeof job.lat === "number" && typeof job.lng === "number") map.setView([job.lat, job.lng], 16, {
+			if (job && hasFiniteCoords(job.lat, job.lng)) map.setView([job.lat, job.lng], 16, {
 				animate: true,
 				duration: .5
 			});
@@ -17904,7 +17907,7 @@ function MapController({ selectedJobId, jobs, searchLocation }) {
 		map
 	]);
 	(0, import_react.useEffect)(() => {
-		if (searchLocation && typeof searchLocation.lat === "number" && typeof searchLocation.lng === "number") map.setView([searchLocation.lat, searchLocation.lng], 16, {
+		if (searchLocation && hasFiniteCoords(searchLocation.lat, searchLocation.lng)) map.setView([searchLocation.lat, searchLocation.lng], 16, {
 			animate: true,
 			duration: .5
 		});
@@ -17942,7 +17945,7 @@ function createCustomIcon(type, isUrgent) {
 	});
 }
 function hasValidCoords(job) {
-	return typeof job.lat === "number" && typeof job.lng === "number" && !isNaN(job.lat) && !isNaN(job.lng);
+	return hasFiniteCoords(job.lat, job.lng);
 }
 function JobMap({ jobs, activeFilters, showUrgentOnly, selectedJobId, onJobSelect, searchLocation, onMapClick }) {
 	const [mapCenter] = (0, import_react.useState)(DEFAULT_MAP_CENTER);
@@ -18684,9 +18687,10 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 		};
 	};
 	const [formData, setFormData] = (0, import_react.useState)(() => {
-		const coords = getCustomerCoords(customers[0]?.id || 0);
+		const firstCustomer = customers[0];
+		const coords = getCustomerCoords(firstCustomer?.id || 0);
 		return {
-			customerId: customers[0]?.id || 0,
+			customerId: firstCustomer?.id || 0,
 			type: "install",
 			status: "pending",
 			description: "",
@@ -18698,6 +18702,24 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 			lng: coords.lng
 		};
 	});
+	(0, import_react.useEffect)(() => {
+		if (isOpen && customers.length > 0) {
+			const firstCustomer = customers[0];
+			const coords = getCustomerCoords(firstCustomer.id);
+			setFormData({
+				customerId: firstCustomer.id,
+				type: "install",
+				status: "pending",
+				description: "",
+				scheduledDate: "",
+				estimatedHours: 4,
+				cost: "",
+				isUrgent: false,
+				lat: coords.lat,
+				lng: coords.lng
+			});
+		}
+	}, [isOpen, customers]);
 	const handleCustomerChange = (customerId) => {
 		const coords = getCustomerCoords(customerId);
 		setFormData((prev) => ({
@@ -18710,6 +18732,14 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 	if (!isOpen) return null;
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		if (!formData.customerId || formData.customerId <= 0) {
+			alert("Please select a valid customer");
+			return;
+		}
+		if (!formData.description.trim()) {
+			alert("Please enter a job description");
+			return;
+		}
 		onSubmit({
 			...formData,
 			cost: formData.cost ? parseFloat(formData.cost) : void 0
@@ -19110,6 +19140,36 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }) {
 //#endregion
 //#region src/utils/api.ts
 var API_BASE = "/api";
+var toNumber = (v) => {
+	if (typeof v === "number" && Number.isFinite(v)) return v;
+	if (typeof v === "string") {
+		const n = Number(v);
+		if (Number.isFinite(n)) return n;
+	}
+};
+var normalizeJob = (raw) => {
+	const lat = toNumber(raw?.lat ?? raw?.latitude);
+	const lng = toNumber(raw?.lng ?? raw?.longitude ?? raw?.lon);
+	return {
+		id: Number(raw?.id ?? Date.now()),
+		customerId: Number(raw?.customerId ?? raw?.customer_id ?? 0),
+		dockId: raw?.dockId ?? raw?.dock_id,
+		type: raw?.type ?? "service",
+		status: raw?.status ?? "pending",
+		scheduledDate: raw?.scheduledDate ?? raw?.scheduled_date,
+		completedDate: raw?.completedDate ?? raw?.completed_date,
+		description: raw?.description ?? raw?.notes ?? raw?.title ?? "",
+		estimatedHours: Number(raw?.estimatedHours ?? raw?.estimated_hours ?? 1),
+		actualHours: raw?.actualHours ?? raw?.actual_hours,
+		materials: raw?.materials,
+		cost: toNumber(raw?.cost),
+		notes: raw?.notes,
+		isUrgent: Boolean(raw?.isUrgent ?? raw?.is_urgent ?? raw?.priority === "urgent"),
+		lat: lat ?? NaN,
+		lng: lng ?? NaN,
+		createdAt: raw?.createdAt ?? raw?.created_at ?? (/* @__PURE__ */ new Date()).toISOString()
+	};
+};
 async function apiFetch(path, options) {
 	const res = await fetch(`${API_BASE}${path}`, {
 		headers: { "Content-Type": "application/json" },
@@ -19131,20 +19191,35 @@ async function createCustomer(data) {
 	});
 }
 async function fetchJobs() {
-	return apiFetch("/jobs");
+	const rows = await apiFetch("/jobs");
+	if (!Array.isArray(rows)) return [];
+	return rows.map(normalizeJob);
 }
 async function createJob(data) {
-	return apiFetch("/jobs", {
+	return normalizeJob(await apiFetch("/jobs", {
 		method: "POST",
 		body: JSON.stringify({
 			customerId: data.customerId,
+			customer_id: data.customerId,
 			type: data.type,
 			status: data.status,
+			title: data.description,
+			description: data.description,
 			notes: data.description,
 			scheduledDate: data.scheduledDate,
-			priority: data.isUrgent ? "urgent" : "normal"
+			scheduled_date: data.scheduledDate,
+			estimatedHours: data.estimatedHours,
+			estimated_hours: data.estimatedHours,
+			cost: data.cost,
+			priority: data.isUrgent ? "urgent" : "normal",
+			isUrgent: data.isUrgent,
+			is_urgent: data.isUrgent,
+			lat: data.lat,
+			lng: data.lng,
+			latitude: data.lat,
+			longitude: data.lng
 		})
-	});
+	}));
 }
 //#endregion
 //#region src/App.tsx
@@ -19234,18 +19309,39 @@ function App() {
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
 			console.log("[App] Adding job:", jobData);
+			const customerId = parseInt(jobData.customerId);
+			if (isNaN(customerId) || customerId <= 0) throw new Error("Please select a valid customer");
 			const lat = typeof jobData.lat === "number" ? jobData.lat : parseFloat(jobData.lat);
 			const lng = typeof jobData.lng === "number" ? jobData.lng : parseFloat(jobData.lng);
 			if (isNaN(lat) || isNaN(lng)) throw new Error("Invalid coordinates: lat and lng must be valid numbers");
 			const jobWithCoords = {
 				...jobData,
+				customerId,
 				lat,
 				lng
 			};
-			if (useApi) {
+			if (useApi) try {
 				const newJob = await createJob(jobWithCoords);
 				setJobs((prev) => [...prev, newJob]);
-			} else {
+			} catch (apiErr) {
+				console.warn("[App] API failed, falling back to demo mode:", apiErr);
+				const newJob = {
+					id: Date.now(),
+					customerId: jobWithCoords.customerId,
+					type: jobWithCoords.type,
+					status: jobWithCoords.status,
+					description: jobWithCoords.description,
+					scheduledDate: jobWithCoords.scheduledDate,
+					estimatedHours: jobWithCoords.estimatedHours,
+					cost: jobWithCoords.cost,
+					isUrgent: jobWithCoords.isUrgent,
+					lat: jobWithCoords.lat,
+					lng: jobWithCoords.lng,
+					createdAt: (/* @__PURE__ */ new Date()).toISOString()
+				};
+				setJobs((prev) => [...prev, newJob]);
+			}
+			else {
 				const newJob = {
 					id: Date.now(),
 					customerId: jobWithCoords.customerId,
@@ -19982,4 +20078,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-CT5wwg4a.js.map
+//# sourceMappingURL=index-Cj6Pic49.js.map
