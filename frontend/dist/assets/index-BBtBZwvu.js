@@ -18701,7 +18701,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 		lng: DEFAULT_LNG
 	});
 	(0, import_react.useEffect)(() => {
-		if (isOpen && customers.length > 0) {
+		if (isOpen && customers.length > 0 && formData.customerId === "") {
 			const firstCustomer = customers[0];
 			const coords = getCustomerCoords(firstCustomer.id);
 			setFormData({
@@ -18772,7 +18772,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
 							value: formData.customerId,
-							onChange: (e) => handleCustomerChange(parseInt(e.target.value)),
+							onChange: (e) => handleCustomerChange(e.target.value),
 							className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
 							required: true,
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
@@ -20104,4 +20104,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-Buo4miZV.js.map
+//# sourceMappingURL=index-BBtBZwvu.js.map
