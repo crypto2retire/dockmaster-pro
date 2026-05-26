@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <!-- Water -->
+  <ellipse cx="60" cy="85" rx="45" ry="8" fill="#E8F0F8"/>
+  <ellipse cx="60" cy="90" rx="35" ry="6" fill="#D4E4F0"/>
+  
+  <!-- Barge body -->
+  <rect x="25" y="68" width="70" height="14" rx="3" fill="#6B7B8D" opacity="0.4"/>
+  <rect x="28" y="70" width="64" height="10" rx="2" fill="#8B9DAB" opacity="0.3"/>
+  
+  <!-- Crane -->
+  <line x1="45" y1="68" x2="45" y2="42" stroke="#6B7B8D" stroke-width="2.5" opacity="0.4"/>
+  <line x1="45" y1="42" x2="70" y2="52" stroke="#6B7B8D" stroke-width="2" opacity="0.4"/>
+  <line x1="70" y1="52" x2="70" y2="60" stroke="#6B7B8D" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Hook -->
+  <path d="M68 60 Q70 65 72 60" stroke="#8B9DAB" stroke-width="1.5" fill="none" opacity="0.4"/>
+  
+  <!-- Small waves -->
+  <path d="M20 88 Q30 84 40 88 Q50 92 60 88 Q70 84 80 88 Q90 92 100 88" stroke="#5B9BD5" stroke-width="1" fill="none" opacity="0.2"/>
+  
+  <!-- Dots for interest -->
+  <circle cx="35" cy="55" r="1.5" fill="#6B7B8D" opacity="0.15"/>
+  <circle cx="85" cy="48" r="1.5" fill="#6B7B8D" opacity="0.15"/>
+  <circle cx="55" cy="38" r="1" fill="#6B7B8D" opacity="0.1"/>
+</svg>
