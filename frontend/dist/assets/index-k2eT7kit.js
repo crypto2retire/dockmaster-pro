@@ -18700,8 +18700,9 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers, defaultLocation }) 
 		lat: DEFAULT_LAT,
 		lng: DEFAULT_LNG
 	});
+	const prevOpenRef = (0, import_react.useRef)(isOpen);
 	(0, import_react.useEffect)(() => {
-		if (isOpen && customers.length > 0) {
+		if (isOpen && !prevOpenRef.current && customers.length > 0) {
 			const firstCustomer = customers[0];
 			const coords = defaultLocation || getCustomerCoords(firstCustomer.id);
 			setFormData({
@@ -18717,7 +18718,12 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers, defaultLocation }) 
 				lng: coords.lng
 			});
 		}
-	}, [isOpen]);
+		prevOpenRef.current = isOpen;
+	}, [
+		isOpen,
+		customers,
+		defaultLocation
+	]);
 	const handleCustomerChange = (customerId) => {
 		const coords = getCustomerCoords(customerId);
 		console.log("[AddJobModal] Customer changed to:", customerId, "coords:", coords);
@@ -18980,7 +18986,30 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }) {
 		lng: -88.5426,
 		notes: ""
 	});
+	const [isGeocoding, setIsGeocoding] = (0, import_react.useState)(false);
+	const [geocodeError, setGeocodeError] = (0, import_react.useState)(null);
 	if (!isOpen) return null;
+	const handleGeocode = async () => {
+		if (!formData.address.trim()) {
+			setGeocodeError("Please enter an address first");
+			return;
+		}
+		setIsGeocoding(true);
+		setGeocodeError(null);
+		try {
+			const result = await geocodeAddress(formData.address);
+			if (result) setFormData((prev) => ({
+				...prev,
+				lat: result.lat,
+				lng: result.lng
+			}));
+			else setGeocodeError("Could not find coordinates for this address. Please enter manually.");
+		} catch (e) {
+			setGeocodeError("Geocoding failed. Please enter coordinates manually.");
+		} finally {
+			setIsGeocoding(false);
+		}
+	};
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		onSubmit(formData);
@@ -18993,6 +19022,7 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }) {
 			lng: -88.5426,
 			notes: ""
 		});
+		setGeocodeError(null);
 		onClose();
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -19081,6 +19111,17 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }) {
 							required: true
 						})]
 					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: handleGeocode,
+						disabled: isGeocoding,
+						className: "w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Search, { className: "w-4 h-4" }), isGeocoding ? "Looking up coordinates..." : "Look up coordinates from address"]
+					}),
+					geocodeError && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-amber-600",
+						children: geocodeError
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "grid grid-cols-2 gap-3",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
@@ -20119,4 +20160,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-CSDkZpaw.js.map
+//# sourceMappingURL=index-k2eT7kit.js.map
