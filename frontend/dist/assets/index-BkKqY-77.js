@@ -18997,13 +18997,15 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, defaultLocation }) {
 		setIsGeocoding(true);
 		setGeocodeError(null);
 		try {
-			const result = await geocodeAddress(formData.address);
+			let result = await geocodeAddress(formData.address);
+			if (!result && !formData.address.toLowerCase().includes("oshkosh")) result = await geocodeAddress(formData.address + ", Oshkosh, WI");
+			if (!result && !formData.address.toLowerCase().includes("54904")) result = await geocodeAddress(formData.address + ", 54904");
 			if (result) setFormData((prev) => ({
 				...prev,
 				lat: result.lat,
 				lng: result.lng
 			}));
-			else setGeocodeError("Could not find coordinates. Try adding \"Oshkosh, WI\" to the address, or enter coordinates manually.");
+			else setGeocodeError("Address not found. Please enter coordinates manually below, or click on the map to set location.");
 		} catch (e) {
 			setGeocodeError("Geocoding service unavailable. Please enter coordinates manually or click on the map.");
 		} finally {
@@ -19123,36 +19125,47 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, defaultLocation }) {
 						children: geocodeError
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "grid grid-cols-2 gap-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-							className: "block text-sm font-medium text-gray-700 mb-1",
-							children: "Latitude"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							type: "number",
-							step: "any",
-							value: formData.lat,
-							onChange: (e) => setFormData({
-								...formData,
-								lat: parseFloat(e.target.value)
+						className: "bg-blue-50 p-4 rounded-lg border border-blue-200",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-sm font-medium text-blue-900 mb-3",
+								children: "Location Coordinates *"
 							}),
-							className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent"
-						})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-							className: "block text-sm font-medium text-gray-700 mb-1",
-							children: "Longitude"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							type: "number",
-							step: "any",
-							value: formData.lng,
-							onChange: (e) => setFormData({
-								...formData,
-								lng: parseFloat(e.target.value)
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "grid grid-cols-2 gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+									className: "block text-xs font-medium text-blue-700 mb-1",
+									children: "Latitude"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "number",
+									step: "any",
+									value: formData.lat,
+									onChange: (e) => setFormData({
+										...formData,
+										lat: parseFloat(e.target.value)
+									}),
+									className: "w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
+									required: true
+								})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+									className: "block text-xs font-medium text-blue-700 mb-1",
+									children: "Longitude"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "number",
+									step: "any",
+									value: formData.lng,
+									onChange: (e) => setFormData({
+										...formData,
+										lng: parseFloat(e.target.value)
+									}),
+									className: "w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
+									required: true
+								})] })]
 							}),
-							className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent"
-						})] })]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-xs text-gray-400",
-						children: "Tip: Click on the map to set location automatically"
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-xs text-blue-600 mt-2",
+								children: "💡 Tip: Close this modal and click on the map at the exact dock location"
+							})
+						]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
 						className: "block text-sm font-medium text-gray-700 mb-1",
@@ -20171,4 +20184,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-DM3QCYeM.js.map
+//# sourceMappingURL=index-BkKqY-77.js.map
