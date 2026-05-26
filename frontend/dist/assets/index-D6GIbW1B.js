@@ -10335,6 +10335,16 @@ var Calendar = createLucideIcon("calendar", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Check = createLucideIcon("check", [["path", {
+	d: "M20 6 9 17l-5-5",
+	key: "1gmf2c"
+}]]);
+/**
+* @license lucide-react v1.16.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Clock = createLucideIcon("clock", [["circle", {
 	cx: "12",
 	cy: "12",
@@ -10343,6 +10353,24 @@ var Clock = createLucideIcon("clock", [["circle", {
 }], ["path", {
 	d: "M12 6v6l4 2",
 	key: "mmk7yg"
+}]]);
+/**
+* @license lucide-react v1.16.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Copy = createLucideIcon("copy", [["rect", {
+	width: "14",
+	height: "14",
+	x: "8",
+	y: "8",
+	rx: "2",
+	ry: "2",
+	key: "17jyea"
+}], ["path", {
+	d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2",
+	key: "zix9uf"
 }]]);
 /**
 * @license lucide-react v1.16.0 - ISC
@@ -19095,6 +19123,7 @@ async function createJob(data) {
 //#endregion
 //#region src/App.tsx
 function App() {
+	console.log("[App] Rendering started");
 	const [currentPage, setCurrentPage] = (0, import_react.useState)("map");
 	const [activeFilters, setActiveFilters] = (0, import_react.useState)([
 		"install",
@@ -19111,28 +19140,56 @@ function App() {
 	const [_loading, setLoading] = (0, import_react.useState)(false);
 	const [error, setError] = (0, import_react.useState)(null);
 	const [useApi, setUseApi] = (0, import_react.useState)(true);
+	const [initError, setInitError] = (0, import_react.useState)(null);
 	(0, import_react.useEffect)(() => {
-		if (!useApi) return;
+		try {
+			console.log("[App] Validating demo data...");
+			if (!Array.isArray(jobs)) throw new Error("demoJobs is not an array");
+			if (!Array.isArray(customers)) throw new Error("demoCustomers is not an array");
+			console.log("[App] Demo data OK - jobs:", jobs.length, "customers:", customers.length);
+		} catch (e) {
+			const msg = "Data validation failed: " + e.message;
+			console.error("[App]", msg);
+			setInitError(msg);
+		}
+	}, []);
+	(0, import_react.useEffect)(() => {
+		if (!useApi || initError) return;
+		console.log("[App] Loading data from API...");
 		loadData();
-	}, [useApi]);
+	}, [useApi, initError]);
 	const loadData = async () => {
 		setLoading(true);
 		setError(null);
 		try {
-			const [fetchedJobs, fetchedCustomers] = await Promise.all([fetchJobs().catch(() => []), fetchCustomers().catch(() => [])]);
+			const [fetchedJobs, fetchedCustomers] = await Promise.all([fetchJobs().catch((e) => {
+				console.warn("[App] fetchJobs failed:", e);
+				return [];
+			}), fetchCustomers().catch((e) => {
+				console.warn("[App] fetchCustomers failed:", e);
+				return [];
+			})]);
+			console.log("[App] API response - jobs:", fetchedJobs.length, "customers:", fetchedCustomers.length);
 			if (fetchedJobs.length > 0) setJobs(fetchedJobs);
 			if (fetchedCustomers.length > 0) setCustomers(fetchedCustomers);
 		} catch (e) {
-			setError("Failed to load data from server");
+			const msg = "Failed to load data from server";
+			console.error("[App]", msg, e);
+			setError(msg);
 		} finally {
 			setLoading(false);
 		}
 	};
 	const filteredJobs = (0, import_react.useMemo)(() => {
-		return jobs$1.filter((job) => {
-			if (showUrgentOnly && !job.isUrgent) return false;
-			return activeFilters.includes(job.type);
-		});
+		try {
+			return jobs$1.filter((job) => {
+				if (showUrgentOnly && !job.isUrgent) return false;
+				return activeFilters.includes(job.type);
+			});
+		} catch (e) {
+			console.error("[App] filteredJobs error:", e);
+			return [];
+		}
 	}, [
 		jobs$1,
 		activeFilters,
@@ -19150,6 +19207,7 @@ function App() {
 	};
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
+			console.log("[App] Adding job:", jobData);
 			if (useApi) {
 				const newJob = await createJob(jobData);
 				setJobs((prev) => [...prev, newJob]);
@@ -19170,12 +19228,16 @@ function App() {
 				};
 				setJobs((prev) => [...prev, newJob]);
 			}
+			console.log("[App] Job added successfully");
 		} catch (e) {
-			alert("Failed to create job: " + e.message);
+			const msg = "Failed to create job: " + e.message;
+			console.error("[App]", msg);
+			alert(msg);
 		}
 	}, [useApi]);
 	const handleAddCustomer = (0, import_react.useCallback)(async (customerData) => {
 		try {
+			console.log("[App] Adding customer:", customerData);
 			if (useApi) {
 				const newCustomer = await createCustomer(customerData);
 				setCustomers((prev) => [...prev, newCustomer]);
@@ -19187,10 +19249,35 @@ function App() {
 				};
 				setCustomers((prev) => [...prev, newCustomer]);
 			}
+			console.log("[App] Customer added successfully");
 		} catch (e) {
-			alert("Failed to create customer: " + e.message);
+			const msg = "Failed to create customer: " + e.message;
+			console.error("[App]", msg);
+			alert(msg);
 		}
 	}, [useApi]);
+	if (initError) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "min-h-screen bg-red-50 flex items-center justify-center p-4",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-xl font-bold text-red-600 mb-2",
+					children: "Startup Error"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-gray-600 mb-4",
+					children: initError
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: () => window.location.reload(),
+					className: "px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700",
+					children: "Reload"
+				})
+			]
+		})
+	});
+	console.log("[App] Rendering main UI");
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "min-h-screen bg-gray-50 flex flex-col",
 		children: [
@@ -19399,8 +19486,464 @@ function App() {
 	});
 }
 //#endregion
+//#region src/components/ErrorBoundary.tsx
+var ErrorBoundary = class extends import_react.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			hasError: false,
+			error: null,
+			errorInfo: null
+		};
+	}
+	static getDerivedStateFromError(error) {
+		return {
+			hasError: true,
+			error,
+			errorInfo: null
+		};
+	}
+	componentDidCatch(error, errorInfo) {
+		console.error("[ErrorBoundary] React error:", error, errorInfo);
+		this.setState({
+			error,
+			errorInfo
+		});
+		window.dispatchEvent(new ErrorEvent("error", {
+			message: `React ErrorBoundary: ${error.message}`,
+			error
+		}));
+	}
+	render() {
+		if (this.state.hasError) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			style: {
+				minHeight: "100vh",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				padding: 24,
+				background: "#fef2f2",
+				fontFamily: "system-ui, sans-serif"
+			},
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					maxWidth: 600,
+					width: "100%",
+					background: "#fff",
+					borderRadius: 16,
+					padding: "32px 24px",
+					boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+					textAlign: "center"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						style: {
+							width: 64,
+							height: 64,
+							borderRadius: "50%",
+							background: "#fee2e2",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							margin: "0 auto 20px"
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { style: {
+							width: 32,
+							height: 32,
+							color: "#dc2626"
+						} })
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+						style: {
+							margin: "0 0 8px",
+							fontSize: 22,
+							fontWeight: 700,
+							color: "#991b1b"
+						},
+						children: "Something went wrong"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						style: {
+							margin: "0 0 20px",
+							color: "#7f1d1d",
+							fontSize: 14
+						},
+						children: "The app crashed during rendering. Check the error details below."
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: {
+							background: "#f3f4f6",
+							borderRadius: 12,
+							padding: 16,
+							textAlign: "left",
+							marginBottom: 20,
+							overflow: "auto"
+						},
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								style: {
+									margin: "0 0 8px",
+									fontSize: 13,
+									fontWeight: 600,
+									color: "#1f2937"
+								},
+								children: this.state.error?.message || "Unknown error"
+							}),
+							this.state.errorInfo && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+								style: {
+									margin: 0,
+									fontSize: 11,
+									color: "#4b5563",
+									whiteSpace: "pre-wrap",
+									wordBreak: "break-word",
+									maxHeight: 200,
+									overflow: "auto"
+								},
+								children: this.state.errorInfo.componentStack
+							}),
+							this.state.error?.stack && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+								style: {
+									margin: "8px 0 0",
+									fontSize: 11,
+									color: "#4b5563",
+									whiteSpace: "pre-wrap",
+									wordBreak: "break-word",
+									maxHeight: 200,
+									overflow: "auto"
+								},
+								children: this.state.error.stack
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						onClick: () => window.location.reload(),
+						style: {
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 8,
+							padding: "10px 20px",
+							background: "#dc2626",
+							color: "#fff",
+							border: "none",
+							borderRadius: 8,
+							fontSize: 14,
+							fontWeight: 600,
+							cursor: "pointer"
+						},
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RefreshCw, { style: {
+							width: 16,
+							height: 16
+						} }), "Reload Page"]
+					})
+				]
+			})
+		});
+		return this.props.children;
+	}
+};
+//#endregion
+//#region src/components/ErrorReporter.tsx
+function ErrorReporter() {
+	const [errors, setErrors] = (0, import_react.useState)([]);
+	const [collapsed, setCollapsed] = (0, import_react.useState)(false);
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		const handleError = (event) => {
+			const info = {
+				message: event.message || "Unknown error",
+				stack: event.error?.stack,
+				source: event.filename,
+				lineno: event.lineno,
+				colno: event.colno,
+				timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+				type: "error"
+			};
+			setErrors((prev) => [...prev, info]);
+			console.error("[ErrorReporter] Caught error:", info);
+		};
+		const handleRejection = (event) => {
+			const info = {
+				message: event.reason?.message || String(event.reason) || "Unhandled Promise rejection",
+				stack: event.reason?.stack,
+				timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+				type: "unhandledrejection"
+			};
+			setErrors((prev) => [...prev, info]);
+			console.error("[ErrorReporter] Caught rejection:", info);
+		};
+		window.addEventListener("error", handleError);
+		window.addEventListener("unhandledrejection", handleRejection);
+		return () => {
+			window.removeEventListener("error", handleError);
+			window.removeEventListener("unhandledrejection", handleRejection);
+		};
+	}, []);
+	if (errors.length === 0) return null;
+	const latest = errors[errors.length - 1];
+	const reportText = errors.map((e, i) => `--- Error ${i + 1} (${e.type}) ---\nTime: ${e.timestamp}\nMessage: ${e.message}\n` + (e.source ? `Source: ${e.source}:${e.lineno}:${e.colno}\n` : "") + (e.stack ? `Stack:\n${e.stack}\n` : "")).join("\n");
+	const copyToClipboard = async () => {
+		await navigator.clipboard.writeText(reportText);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	};
+	const reload = () => window.location.reload();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		style: {
+			position: "fixed",
+			top: 16,
+			left: "50%",
+			transform: "translateX(-50%)",
+			zIndex: 99999,
+			maxWidth: 600,
+			width: "90vw",
+			background: "#fef2f2",
+			border: "2px solid #ef4444",
+			borderRadius: 12,
+			boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+			fontFamily: "system-ui, sans-serif"
+		},
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			style: {
+				display: "flex",
+				alignItems: "center",
+				gap: 12,
+				padding: "12px 16px",
+				borderBottom: collapsed ? "none" : "1px solid #fecaca",
+				cursor: "pointer"
+			},
+			onClick: () => setCollapsed(!collapsed),
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { style: {
+					width: 20,
+					height: 20,
+					color: "#dc2626",
+					flexShrink: 0
+				} }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					style: {
+						flex: 1,
+						minWidth: 0
+					},
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						style: {
+							margin: 0,
+							fontWeight: 600,
+							color: "#991b1b",
+							fontSize: 14
+						},
+						children: [
+							errors.length,
+							" error",
+							errors.length > 1 ? "s" : "",
+							" caught"
+						]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						style: {
+							margin: "4px 0 0",
+							color: "#7f1d1d",
+							fontSize: 12,
+							whiteSpace: "nowrap",
+							overflow: "hidden",
+							textOverflow: "ellipsis"
+						},
+						children: latest.message
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					style: {
+						display: "flex",
+						gap: 8,
+						flexShrink: 0
+					},
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: (e) => {
+								e.stopPropagation();
+								copyToClipboard();
+							},
+							style: {
+								padding: 6,
+								borderRadius: 6,
+								border: "none",
+								background: "#fee2e2",
+								cursor: "pointer",
+								display: "flex",
+								alignItems: "center"
+							},
+							title: "Copy error report",
+							children: copied ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, { style: {
+								width: 14,
+								height: 14,
+								color: "#16a34a"
+							} }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Copy, { style: {
+								width: 14,
+								height: 14,
+								color: "#dc2626"
+							} })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: (e) => {
+								e.stopPropagation();
+								reload();
+							},
+							style: {
+								padding: 6,
+								borderRadius: 6,
+								border: "none",
+								background: "#fee2e2",
+								cursor: "pointer",
+								display: "flex",
+								alignItems: "center"
+							},
+							title: "Reload page",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RefreshCw, { style: {
+								width: 14,
+								height: 14,
+								color: "#dc2626"
+							} })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: (e) => {
+								e.stopPropagation();
+								setErrors([]);
+							},
+							style: {
+								padding: 6,
+								borderRadius: 6,
+								border: "none",
+								background: "#fee2e2",
+								cursor: "pointer",
+								display: "flex",
+								alignItems: "center"
+							},
+							title: "Dismiss",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { style: {
+								width: 14,
+								height: 14,
+								color: "#dc2626"
+							} })
+						})
+					]
+				})
+			]
+		}), !collapsed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			style: {
+				maxHeight: 400,
+				overflow: "auto",
+				padding: "12px 16px"
+			},
+			children: errors.map((err, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					marginBottom: 12,
+					padding: 12,
+					background: "#fff",
+					borderRadius: 8,
+					border: "1px solid #fecaca"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: {
+							display: "flex",
+							alignItems: "center",
+							gap: 8,
+							marginBottom: 8
+						},
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							style: {
+								fontSize: 10,
+								fontWeight: 600,
+								textTransform: "uppercase",
+								padding: "2px 8px",
+								borderRadius: 4,
+								background: err.type === "error" ? "#fee2e2" : err.type === "unhandledrejection" ? "#fef3c7" : "#dbeafe",
+								color: err.type === "error" ? "#dc2626" : err.type === "unhandledrejection" ? "#d97706" : "#2563eb"
+							},
+							children: err.type
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							style: {
+								fontSize: 11,
+								color: "#9ca3af"
+							},
+							children: new Date(err.timestamp).toLocaleTimeString()
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						style: {
+							margin: "0 0 4px",
+							fontSize: 13,
+							fontWeight: 500,
+							color: "#1f2937",
+							wordBreak: "break-word"
+						},
+						children: err.message
+					}),
+					err.source && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						style: {
+							margin: "0 0 4px",
+							fontSize: 11,
+							color: "#6b7280"
+						},
+						children: [
+							err.source,
+							":",
+							err.lineno,
+							":",
+							err.colno
+						]
+					}),
+					err.stack && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", {
+						style: {
+							margin: "8px 0 0",
+							padding: 8,
+							background: "#f3f4f6",
+							borderRadius: 6,
+							fontSize: 11,
+							color: "#4b5563",
+							overflow: "auto",
+							maxHeight: 150,
+							whiteSpace: "pre-wrap",
+							wordBreak: "break-word"
+						},
+						children: err.stack
+					})
+				]
+			}, idx))
+		})]
+	});
+}
+//#endregion
 //#region src/main.tsx
-(0, import_client.createRoot)(document.getElementById("root")).render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(App, {}) }));
+window.onerror = function(message, source, lineno, colno, error) {
+	console.error("[Global Error]", {
+		message,
+		source,
+		lineno,
+		colno,
+		error
+	});
+	return false;
+};
+window.onunhandledrejection = function(event) {
+	console.error("[Unhandled Rejection]", event.reason);
+};
+console.log("[DockMaster] Starting app...", (/* @__PURE__ */ new Date()).toISOString());
+try {
+	const root = document.getElementById("root");
+	if (!root) throw new Error("Root element not found in DOM");
+	(0, import_client.createRoot)(root).render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.StrictMode, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ErrorBoundary, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ErrorReporter, {}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(App, {})] }) }));
+	console.log("[DockMaster] App mounted successfully");
+} catch (err) {
+	console.error("[DockMaster] Failed to mount app:", err);
+	const root = document.getElementById("root");
+	if (root) root.innerHTML = `
+      <div style="padding: 40px; text-align: center; font-family: system-ui, sans-serif;">
+        <h1 style="color: #dc2626;">Failed to Start</h1>
+        <p style="color: #666;">${err instanceof Error ? err.message : String(err)}</p>
+        <pre style="text-align: left; background: #f3f4f6; padding: 16px; border-radius: 8px; overflow: auto; max-width: 600px; margin: 20px auto;">${err instanceof Error ? err.stack : "No stack trace"}</pre>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 8px; cursor: pointer;">Reload</button>
+      </div>
+    `;
+}
 //#endregion
 
-//# sourceMappingURL=index-Bz7sXRwn.js.map
+//# sourceMappingURL=index-D6GIbW1B.js.map
