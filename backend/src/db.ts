@@ -1,9 +1,17 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { promisify } from 'util';
+import fs from 'fs';
 
-// Resolve DB path relative to project root (where npm start is run from)
-const dbPath = path.join(__dirname, '..', '..', 'data', 'dockmaster.db');
+// Use Railway volume path if available, fallback to local data dir
+const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, '..', '..', 'data');
+const dbPath = path.join(dbDir, 'dockmaster.db');
+
+// Ensure directory exists
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new sqlite3.Database(dbPath);
 
 export const dbAll = promisify(db.all.bind(db)) as <T = unknown>(sql: string, params?: Record<string, unknown>) => Promise<T[]>;

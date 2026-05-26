@@ -8,8 +8,14 @@ exports.initDatabase = initDatabase;
 const sqlite3_1 = __importDefault(require("sqlite3"));
 const path_1 = __importDefault(require("path"));
 const util_1 = require("util");
-// Resolve DB path relative to project root (where npm start is run from)
-const dbPath = path_1.default.join(__dirname, '..', '..', 'data', 'dockmaster.db');
+const fs_1 = __importDefault(require("fs"));
+// Use Railway volume path if available, fallback to local data dir
+const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || path_1.default.join(__dirname, '..', '..', 'data');
+const dbPath = path_1.default.join(dbDir, 'dockmaster.db');
+// Ensure directory exists
+if (!fs_1.default.existsSync(dbDir)) {
+    fs_1.default.mkdirSync(dbDir, { recursive: true });
+}
 const db = new sqlite3_1.default.Database(dbPath);
 exports.dbAll = (0, util_1.promisify)(db.all.bind(db));
 exports.dbGet = (0, util_1.promisify)(db.get.bind(db));
