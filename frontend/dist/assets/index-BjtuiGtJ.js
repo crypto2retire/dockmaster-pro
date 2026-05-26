@@ -18678,29 +18678,27 @@ function GeocodeSearch({ onLocationSelect, defaultValue = "" }) {
 }
 //#endregion
 //#region src/components/AddJobModal.tsx
+var DEFAULT_LAT = 44.0247;
+var DEFAULT_LNG = -88.5426;
 function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 	const getCustomerCoords = (customerId) => {
 		const customer = customers.find((c) => c.id === customerId);
 		return {
-			lat: customer?.lat ?? 44.0247,
-			lng: customer?.lng ?? -88.5426
+			lat: customer?.lat ?? DEFAULT_LAT,
+			lng: customer?.lng ?? DEFAULT_LNG
 		};
 	};
-	const [formData, setFormData] = (0, import_react.useState)(() => {
-		const firstCustomer = customers[0];
-		const coords = getCustomerCoords(firstCustomer?.id || 0);
-		return {
-			customerId: firstCustomer?.id || 0,
-			type: "install",
-			status: "pending",
-			description: "",
-			scheduledDate: "",
-			estimatedHours: 4,
-			cost: "",
-			isUrgent: false,
-			lat: coords.lat,
-			lng: coords.lng
-		};
+	const [formData, setFormData] = (0, import_react.useState)({
+		customerId: 0,
+		type: "install",
+		status: "pending",
+		description: "",
+		scheduledDate: "",
+		estimatedHours: 4,
+		cost: "",
+		isUrgent: false,
+		lat: DEFAULT_LAT,
+		lng: DEFAULT_LNG
 	});
 	(0, import_react.useEffect)(() => {
 		if (isOpen && customers.length > 0) {
@@ -18719,7 +18717,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 				lng: coords.lng
 			});
 		}
-	}, [isOpen, customers]);
+	}, [isOpen]);
 	const handleCustomerChange = (customerId) => {
 		const coords = getCustomerCoords(customerId);
 		setFormData((prev) => ({
@@ -18732,7 +18730,8 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 	if (!isOpen) return null;
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		if (!formData.customerId || formData.customerId <= 0) {
+		const customerId = parseInt(String(formData.customerId));
+		if (isNaN(customerId) || customerId <= 0) {
 			alert("Please select a valid customer");
 			return;
 		}
@@ -18742,7 +18741,8 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 		}
 		onSubmit({
 			...formData,
-			cost: formData.cost ? parseFloat(formData.cost) : void 0
+			customerId,
+			cost: formData.cost ? parseFloat(String(formData.cost)) : void 0
 		});
 		onClose();
 	};
@@ -18767,18 +18767,29 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 				onSubmit: handleSubmit,
 				className: "p-4 space-y-4",
 				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-						className: "block text-sm font-medium text-gray-700 mb-1",
-						children: "Customer"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-						value: formData.customerId,
-						onChange: (e) => handleCustomerChange(parseInt(e.target.value)),
-						className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
-						children: customers.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-							value: c.id,
-							children: c.name
-						}, c.id))
-					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "block text-sm font-medium text-gray-700 mb-1",
+							children: "Customer *"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+							value: formData.customerId,
+							onChange: (e) => handleCustomerChange(parseInt(e.target.value)),
+							className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
+							required: true,
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: 0,
+								children: "-- Select a customer --"
+							}), customers.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: c.id,
+								children: c.name
+							}, c.id))]
+						}),
+						customers.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs text-red-500 mt-1",
+							children: "No customers available. Add a customer first."
+						})
+					] }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
 						className: "block text-sm font-medium text-gray-700 mb-1",
 						children: "Job Type"
@@ -18800,7 +18811,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 					})] }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
 						className: "block text-sm font-medium text-gray-700 mb-1",
-						children: "Description"
+						children: "Description *"
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
 						value: formData.description,
 						onChange: (e) => setFormData({
@@ -19272,7 +19283,9 @@ function App() {
 			})]);
 			console.log("[App] API response - jobs:", fetchedJobs.length, "customers:", fetchedCustomers.length);
 			if (fetchedJobs.length > 0) setJobs(fetchedJobs);
+			else console.log("[App] API returned no jobs, keeping demo data");
 			if (fetchedCustomers.length > 0) setCustomers(fetchedCustomers);
+			else console.log("[App] API returned no customers, keeping demo data");
 		} catch (e) {
 			const msg = "Failed to load data from server";
 			console.error("[App]", msg, e);
@@ -20078,4 +20091,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-Cj6Pic49.js.map
+//# sourceMappingURL=index-BjtuiGtJ.js.map
