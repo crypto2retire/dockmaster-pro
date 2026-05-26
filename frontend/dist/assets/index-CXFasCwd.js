@@ -17893,7 +17893,7 @@ function MapController({ selectedJobId, jobs, searchLocation }) {
 	(0, import_react.useEffect)(() => {
 		if (selectedJobId) {
 			const job = jobs.find((j) => j.id === selectedJobId);
-			if (job) map.setView([job.lat, job.lng], 16, {
+			if (job && typeof job.lat === "number" && typeof job.lng === "number") map.setView([job.lat, job.lng], 16, {
 				animate: true,
 				duration: .5
 			});
@@ -17904,7 +17904,7 @@ function MapController({ selectedJobId, jobs, searchLocation }) {
 		map
 	]);
 	(0, import_react.useEffect)(() => {
-		if (searchLocation) map.setView([searchLocation.lat, searchLocation.lng], 16, {
+		if (searchLocation && typeof searchLocation.lat === "number" && typeof searchLocation.lng === "number") map.setView([searchLocation.lat, searchLocation.lng], 16, {
 			animate: true,
 			duration: .5
 		});
@@ -17941,12 +17941,16 @@ function createCustomIcon(type, isUrgent) {
 		popupAnchor: [0, -14]
 	});
 }
+function hasValidCoords(job) {
+	return typeof job.lat === "number" && typeof job.lng === "number" && !isNaN(job.lat) && !isNaN(job.lng);
+}
 function JobMap({ jobs, activeFilters, showUrgentOnly, selectedJobId, onJobSelect, searchLocation, onMapClick }) {
 	const [mapCenter] = (0, import_react.useState)(DEFAULT_MAP_CENTER);
 	const [zoom] = (0, import_react.useState)(11);
 	const [clickMarker, setClickMarker] = (0, import_react.useState)(null);
 	const filteredJobs = (0, import_react.useMemo)(() => {
 		return jobs.filter((job) => {
+			if (!hasValidCoords(job)) return false;
 			if (showUrgentOnly && !job.isUrgent) return false;
 			return activeFilters.includes(job.type);
 		});
@@ -17978,6 +17982,12 @@ function JobMap({ jobs, activeFilters, showUrgentOnly, selectedJobId, onJobSelec
 			case "service": return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wrench, { className: "w-4 h-4" });
 		}
 	};
+	const invalidJobs = (0, import_react.useMemo)(() => jobs.filter((j) => !hasValidCoords(j)), [jobs]);
+	if (invalidJobs.length > 0) console.warn("[JobMap] Skipping jobs with invalid coordinates:", invalidJobs.map((j) => ({
+		id: j.id,
+		lat: j.lat,
+		lng: j.lng
+	})));
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "relative w-full h-full",
 		children: [
@@ -19946,4 +19956,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-D6GIbW1B.js.map
+//# sourceMappingURL=index-CXFasCwd.js.map
