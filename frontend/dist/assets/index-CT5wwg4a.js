@@ -18676,18 +18676,37 @@ function GeocodeSearch({ onLocationSelect, defaultValue = "" }) {
 //#endregion
 //#region src/components/AddJobModal.tsx
 function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
-	const [formData, setFormData] = (0, import_react.useState)({
-		customerId: customers[0]?.id || 0,
-		type: "install",
-		status: "pending",
-		description: "",
-		scheduledDate: "",
-		estimatedHours: 4,
-		cost: "",
-		isUrgent: false,
-		lat: 44.0247,
-		lng: -88.5426
+	const getCustomerCoords = (customerId) => {
+		const customer = customers.find((c) => c.id === customerId);
+		return {
+			lat: customer?.lat ?? 44.0247,
+			lng: customer?.lng ?? -88.5426
+		};
+	};
+	const [formData, setFormData] = (0, import_react.useState)(() => {
+		const coords = getCustomerCoords(customers[0]?.id || 0);
+		return {
+			customerId: customers[0]?.id || 0,
+			type: "install",
+			status: "pending",
+			description: "",
+			scheduledDate: "",
+			estimatedHours: 4,
+			cost: "",
+			isUrgent: false,
+			lat: coords.lat,
+			lng: coords.lng
+		};
 	});
+	const handleCustomerChange = (customerId) => {
+		const coords = getCustomerCoords(customerId);
+		setFormData((prev) => ({
+			...prev,
+			customerId,
+			lat: coords.lat,
+			lng: coords.lng
+		}));
+	};
 	if (!isOpen) return null;
 	const handleSubmit = (e) => {
 		e.preventDefault();
@@ -18723,10 +18742,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 						children: "Customer"
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
 						value: formData.customerId,
-						onChange: (e) => setFormData({
-							...formData,
-							customerId: parseInt(e.target.value)
-						}),
+						onChange: (e) => handleCustomerChange(parseInt(e.target.value)),
 						className: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-dock-blue focus:border-transparent",
 						children: customers.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
 							value: c.id,
@@ -19218,22 +19234,30 @@ function App() {
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
 			console.log("[App] Adding job:", jobData);
+			const lat = typeof jobData.lat === "number" ? jobData.lat : parseFloat(jobData.lat);
+			const lng = typeof jobData.lng === "number" ? jobData.lng : parseFloat(jobData.lng);
+			if (isNaN(lat) || isNaN(lng)) throw new Error("Invalid coordinates: lat and lng must be valid numbers");
+			const jobWithCoords = {
+				...jobData,
+				lat,
+				lng
+			};
 			if (useApi) {
-				const newJob = await createJob(jobData);
+				const newJob = await createJob(jobWithCoords);
 				setJobs((prev) => [...prev, newJob]);
 			} else {
 				const newJob = {
 					id: Date.now(),
-					customerId: jobData.customerId,
-					type: jobData.type,
-					status: jobData.status,
-					description: jobData.description,
-					scheduledDate: jobData.scheduledDate,
-					estimatedHours: jobData.estimatedHours,
-					cost: jobData.cost,
-					isUrgent: jobData.isUrgent,
-					lat: jobData.lat,
-					lng: jobData.lng,
+					customerId: jobWithCoords.customerId,
+					type: jobWithCoords.type,
+					status: jobWithCoords.status,
+					description: jobWithCoords.description,
+					scheduledDate: jobWithCoords.scheduledDate,
+					estimatedHours: jobWithCoords.estimatedHours,
+					cost: jobWithCoords.cost,
+					isUrgent: jobWithCoords.isUrgent,
+					lat: jobWithCoords.lat,
+					lng: jobWithCoords.lng,
 					createdAt: (/* @__PURE__ */ new Date()).toISOString()
 				};
 				setJobs((prev) => [...prev, newJob]);
@@ -19484,7 +19508,9 @@ function App() {
 				onSubmit: handleAddJob,
 				customers: customers$1.map((c) => ({
 					id: c.id,
-					name: c.name
+					name: c.name,
+					lat: c.lat,
+					lng: c.lng
 				}))
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddCustomerModal, {
@@ -19956,4 +19982,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-CXFasCwd.js.map
+//# sourceMappingURL=index-CT5wwg4a.js.map
