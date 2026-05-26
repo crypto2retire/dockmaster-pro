@@ -18571,8 +18571,22 @@ function Dashboard({ jobs }) {
 //#region src/utils/geocode.ts
 async function geocodeAddress(address) {
 	try {
-		const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, { headers: { "User-Agent": "DockMasterPro/2.0 (dockmaster@example.com)" } });
-		if (!response.ok) return null;
+		const proxyUrl = "https://api.allorigins.win/raw?url=";
+		const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+		const response = await fetch(proxyUrl + encodeURIComponent(nominatimUrl), { headers: { "User-Agent": "DockMasterPro/2.0 (dockmaster@example.com)" } });
+		if (!response.ok) {
+			const directResponse = await fetch(nominatimUrl, { headers: { "User-Agent": "DockMasterPro/2.0 (dockmaster@example.com)" } });
+			if (!directResponse.ok) return null;
+			const data = await directResponse.json();
+			if (!data || data.length === 0) return null;
+			const result = data[0];
+			return {
+				lat: parseFloat(result.lat),
+				lng: parseFloat(result.lon),
+				displayName: result.display_name,
+				address: result.address || {}
+			};
+		}
 		const data = await response.json();
 		if (!data || data.length === 0) return null;
 		const result = data[0];
@@ -20184,4 +20198,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-BkKqY-77.js.map
+//# sourceMappingURL=index-BmMr-li5.js.map
