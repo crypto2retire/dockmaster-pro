@@ -18720,6 +18720,7 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers, defaultLocation }) 
 	}, [isOpen]);
 	const handleCustomerChange = (customerId) => {
 		const coords = getCustomerCoords(customerId);
+		console.log("[AddJobModal] Customer changed to:", customerId, "coords:", coords);
 		setFormData((prev) => ({
 			...prev,
 			customerId,
@@ -20118,4 +20119,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-CRs_NKSz.js.map
+//# sourceMappingURL=index-CSDkZpaw.js.map
