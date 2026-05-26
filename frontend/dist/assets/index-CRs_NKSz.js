@@ -18680,7 +18680,7 @@ function GeocodeSearch({ onLocationSelect, defaultValue = "" }) {
 //#region src/components/AddJobModal.tsx
 var DEFAULT_LAT = 44.0247;
 var DEFAULT_LNG = -88.5426;
-function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
+function AddJobModal({ isOpen, onClose, onSubmit, customers, defaultLocation }) {
 	const getCustomerCoords = (customerId) => {
 		const customer = customers.find((c) => String(c.id) === String(customerId));
 		return {
@@ -18701,9 +18701,9 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers }) {
 		lng: DEFAULT_LNG
 	});
 	(0, import_react.useEffect)(() => {
-		if (isOpen && customers.length > 0 && formData.customerId === "") {
+		if (isOpen && customers.length > 0) {
 			const firstCustomer = customers[0];
-			const coords = getCustomerCoords(firstCustomer.id);
+			const coords = defaultLocation || getCustomerCoords(firstCustomer.id);
 			setFormData({
 				customerId: firstCustomer.id,
 				type: "install",
@@ -19260,6 +19260,7 @@ function App() {
 	const [searchLocation, setSearchLocation] = (0, import_react.useState)(null);
 	const [showAddJob, setShowAddJob] = (0, import_react.useState)(false);
 	const [showAddCustomer, setShowAddCustomer] = (0, import_react.useState)(false);
+	const [pendingLocation, setPendingLocation] = (0, import_react.useState)(null);
 	const [jobs$1, setJobs] = (0, import_react.useState)(jobs);
 	const [customers$1, setCustomers] = (0, import_react.useState)(customers);
 	const [_loading, setLoading] = (0, import_react.useState)(false);
@@ -19332,6 +19333,14 @@ function App() {
 		setSearchLocation(location);
 		setCurrentPage("map");
 	};
+	const handleMapClick = (0, import_react.useCallback)((lat, lng) => {
+		console.log("[App] Map clicked at:", lat, lng);
+		setPendingLocation({
+			lat,
+			lng
+		});
+		setShowAddJob(true);
+	}, []);
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
 			console.log("[App] Adding job:", jobData);
@@ -19529,7 +19538,8 @@ function App() {
 								showUrgentOnly,
 								selectedJobId,
 								onJobSelect: setSelectedJobId,
-								searchLocation
+								searchLocation,
+								onMapClick: handleMapClick
 							})
 						})]
 					}),
@@ -19626,14 +19636,18 @@ function App() {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddJobModal, {
 				isOpen: showAddJob,
-				onClose: () => setShowAddJob(false),
+				onClose: () => {
+					setShowAddJob(false);
+					setPendingLocation(null);
+				},
 				onSubmit: handleAddJob,
 				customers: customers$1.map((c) => ({
 					id: c.id,
 					name: c.name,
 					lat: c.lat,
 					lng: c.lng
-				}))
+				})),
+				defaultLocation: pendingLocation
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddCustomerModal, {
 				isOpen: showAddCustomer,
@@ -20104,4 +20118,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-BBtBZwvu.js.map
+//# sourceMappingURL=index-CRs_NKSz.js.map
