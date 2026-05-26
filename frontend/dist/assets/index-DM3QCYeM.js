@@ -18976,14 +18976,14 @@ function AddJobModal({ isOpen, onClose, onSubmit, customers, defaultLocation }) 
 }
 //#endregion
 //#region src/components/AddCustomerModal.tsx
-function AddCustomerModal({ isOpen, onClose, onSubmit }) {
+function AddCustomerModal({ isOpen, onClose, onSubmit, defaultLocation }) {
 	const [formData, setFormData] = (0, import_react.useState)({
 		name: "",
 		email: "",
 		phone: "",
 		address: "",
-		lat: 44.0247,
-		lng: -88.5426,
+		lat: defaultLocation?.lat ?? 44.0247,
+		lng: defaultLocation?.lng ?? -88.5426,
 		notes: ""
 	});
 	const [isGeocoding, setIsGeocoding] = (0, import_react.useState)(false);
@@ -19003,9 +19003,9 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }) {
 				lat: result.lat,
 				lng: result.lng
 			}));
-			else setGeocodeError("Could not find coordinates for this address. Please enter manually.");
+			else setGeocodeError("Could not find coordinates. Try adding \"Oshkosh, WI\" to the address, or enter coordinates manually.");
 		} catch (e) {
-			setGeocodeError("Geocoding failed. Please enter coordinates manually.");
+			setGeocodeError("Geocoding service unavailable. Please enter coordinates manually or click on the map.");
 		} finally {
 			setIsGeocoding(false);
 		}
@@ -19303,6 +19303,7 @@ function App() {
 	const [showAddJob, setShowAddJob] = (0, import_react.useState)(false);
 	const [showAddCustomer, setShowAddCustomer] = (0, import_react.useState)(false);
 	const [pendingLocation, setPendingLocation] = (0, import_react.useState)(null);
+	const [locationForCustomer, setLocationForCustomer] = (0, import_react.useState)(false);
 	const [jobs$1, setJobs] = (0, import_react.useState)(jobs);
 	const [customers$1, setCustomers] = (0, import_react.useState)(customers);
 	const [_loading, setLoading] = (0, import_react.useState)(false);
@@ -19381,8 +19382,11 @@ function App() {
 			lat,
 			lng
 		});
-		setShowAddJob(true);
-	}, []);
+		if (locationForCustomer) {
+			setShowAddCustomer(true);
+			setLocationForCustomer(false);
+		} else setShowAddJob(true);
+	}, [locationForCustomer]);
 	const handleAddJob = (0, import_react.useCallback)(async (jobData) => {
 		try {
 			console.log("[App] Adding job:", jobData);
@@ -19551,7 +19555,10 @@ function App() {
 											className: "flex items-center justify-center gap-2 px-3 py-2 bg-dock-blue text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors",
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Plus, { className: "w-4 h-4" }), "Add Job"]
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-											onClick: () => setShowAddCustomer(true),
+											onClick: () => {
+												setLocationForCustomer(true);
+												setShowAddCustomer(true);
+											},
 											className: "flex items-center justify-center gap-2 px-3 py-2 bg-dock-navy text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors",
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(UserPlus, { className: "w-4 h-4" }), "Add Customer"]
 										})]
@@ -19693,8 +19700,12 @@ function App() {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddCustomerModal, {
 				isOpen: showAddCustomer,
-				onClose: () => setShowAddCustomer(false),
-				onSubmit: handleAddCustomer
+				onClose: () => {
+					setShowAddCustomer(false);
+					setPendingLocation(null);
+				},
+				onSubmit: handleAddCustomer,
+				defaultLocation: pendingLocation
 			})
 		]
 	});
@@ -20160,4 +20171,4 @@ try {
 }
 //#endregion
 
-//# sourceMappingURL=index-k2eT7kit.js.map
+//# sourceMappingURL=index-DM3QCYeM.js.map
